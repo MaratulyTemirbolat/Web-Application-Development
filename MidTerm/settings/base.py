@@ -22,7 +22,10 @@ DJANGO_AND_THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
 ]
-PROJECT_APPS = []
+PROJECT_APPS = [
+    "apps.abstracts",
+    "apps.tasks",
+]
 
 INSTALLED_APPS = DJANGO_AND_THIRD_PARTY_APPS + PROJECT_APPS
 
