@@ -1,3 +1,9 @@
-from django.contrib import admin
+from django.contrib.admin import ModelAdmin, register
 
-# Register your models here.
+from apps.tasks.models import Task
+
+
+@register(Task)
+class TaskAdmin(ModelAdmin):
+    """Admin class for Task model."""
+    ...

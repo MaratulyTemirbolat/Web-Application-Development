@@ -9,6 +9,7 @@ SECRET_KEY = 'django-insecure-o0p57fruaexkc3mo#w*g-zr#5ngn=uch_o@@4@a0t^tmpy2+j$
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.AllowAny',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',  # Enables CSRF
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }

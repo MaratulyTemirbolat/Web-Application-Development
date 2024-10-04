@@ -64,3 +64,6 @@ class Task(AbstractBaseModel):
 
         verbose_name: str = 'Task'
         verbose_name_plural: str = 'Tasks'
+
+    def __str__(self) -> str:
+        return self.title
