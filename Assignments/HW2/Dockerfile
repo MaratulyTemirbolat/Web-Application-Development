@@ -6,6 +6,7 @@ WORKDIR /myproject
 # Copy Pyproject file
 COPY ./pyproject.toml .
 COPY ./requirements.txt .
+COPY ./.env .
 
 # Install dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
@@ -13,14 +14,11 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copy the rest of the code
 COPY . .
 
-# Make migrations
-RUN python3 manage.py makemigrations
-
-# Apply migrations
-RUN python3 manage.py migrate
+# Collect static files
+RUN python3 manage.py collectstatic --noinput
 
 # Expose the port
 EXPOSE 8000
 
 # Run the application
-ENTRYPOINT ["python3", "manage.py", "runserver"]
+ENTRYPOINT ["sh", "-c", "python3 manage.py migrate && gunicorn myproject.wsgi:application --bind 0.0.0.0:8000"]
