@@ -10,10 +10,14 @@ from rest_framework.serializers import (
     CharField,
     EmailField,
     ValidationError,
+    HiddenField,
+    CurrentUserDefault,
 )
 from rest_framework.exceptions import NotFound
 
 from django.contrib.auth.models import User
+
+from apps.tasks.models import Task
 
 
 class UserBaseModelSerializer(ModelSerializer):
@@ -105,6 +109,7 @@ class CreateUserModelSerializer(ModelSerializer):
     username: CharField = CharField(
         required=False,
     )
+    first_name: CharField = CharField()
 
     class Meta:
         """Customization of serializer class."""
@@ -136,3 +141,71 @@ class CreateUserModelSerializer(ModelSerializer):
         value["is_active"] = True
         value["username"] = value["email"].lower()
         return value
+
+
+class TaskBaseModelSerializer(ModelSerializer):
+    """Base serializer for Task model."""
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[Task] = Task
+        fields: str = "__all__"
+
+    def to_representation(self, instance: Task) -> dict[str, Any]:
+        representation: dict[str, Any] = super().to_representation(instance)
+        representation["status"] = Task.get_status_dict(
+            status_id=representation["status"]
+        )
+        return representation
+
+
+class TaskListModelSerializer(TaskBaseModelSerializer):
+    """Serializer to list the Tasks."""
+
+    ...
+
+
+class TaskCreateModelSerializer(TaskBaseModelSerializer):
+    """Serializer to create a noew Task."""
+
+    owner: HiddenField = HiddenField(default=CurrentUserDefault())
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[Task] = Task
+        exclude: tuple[str] = (
+            "status",
+        )
+
+
+class TaskDetailModelSerializer(TaskBaseModelSerializer):
+    """Serializer to view detailed information about the task."""
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[Task] = Task
+        fields: str = "__all__"
+
+
+class TaskPartialUpdateModelSerializer(TaskBaseModelSerializer):
+    """Serializer to partially update task's data."""
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[Task] = Task
+        fields: tuple[str] = (
+            "status",
+        )
+
+    def validate_status(self, value: int) -> int:
+        """Validate that the status is valid."""
+        if value not in Task.get_status_dict(status_id=value):
+            raise ValidationError("Invalid status.")
+        elif value == self.instance.status:
+            raise ValidationError("You can't update the task with the same status.")
+        return value
+

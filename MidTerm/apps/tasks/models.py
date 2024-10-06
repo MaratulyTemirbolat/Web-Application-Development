@@ -67,3 +67,12 @@ class Task(AbstractBaseModel):
 
     def __str__(self) -> str:
         return self.title
+
+    @classmethod
+    def get_status_dict(cls, status_id: int) -> dict[str, int | str]:
+        """Get a dictionary with status choices."""
+        assert status_id in dict(cls.STATUS_CHOICES), "Invalid status id."
+        return {
+            "status": status_id,
+            "status_description": dict(cls.STATUS_CHOICES)[status_id] 
+        }

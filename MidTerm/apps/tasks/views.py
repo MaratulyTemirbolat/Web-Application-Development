@@ -6,6 +6,7 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.request import Request as DRFRequest
 from rest_framework.status import (
     HTTP_200_OK,
+    HTTP_204_NO_CONTENT,
     HTTP_501_NOT_IMPLEMENTED,
 )
 from rest_framework.permissions import (
@@ -21,13 +22,23 @@ from django.contrib.auth import login
 from django.contrib.auth.hashers import make_password
 
 from apps.abstracts.handlers import DRFResponseHandler
-from apps.abstracts.decorators import validate_serializer_data
+from apps.abstracts.decorators import (
+    validate_serializer_data,
+    find_queryset_object_by_query_pk,
+)
 from apps.tasks.serializers import (
     UserBaseModelSerializer,
     LoginUserSerializer,
     CreateUserModelSerializer,
     DetailUserModelSerializer,
+    TaskBaseModelSerializer,
+    TaskCreateModelSerializer,
+    TaskListModelSerializer,
+    TaskDetailModelSerializer,
+    TaskPartialUpdateModelSerializer,
 )
+from apps.tasks.models import Task
+from apps.tasks.permissions import IsTaskOwner
 from utils.helpers import generate_secure_random_string
 
 
@@ -127,6 +138,105 @@ class UserViewSet(DRFResponseHandler, ViewSet):
         return DRFResponse(
             data=DetailUserModelSerializer(
                 instance=new_user,
+                many=False
+            ).data,
+            status=HTTP_200_OK
+        )
+
+
+class TaskViewSet(DRFResponseHandler, ViewSet):
+    """View set to handler Task related requests."""
+
+    queryset: Manager = Task.objects
+    permission_classes: tuple[
+        Type[BasePermission],
+        Type[BasePermission]
+    ] = (
+        IsAuthenticated,
+        IsTaskOwner,
+    )
+    serializer_class: Type[TaskBaseModelSerializer] = TaskBaseModelSerializer
+    authentication_classes: list[Any] = []
+
+    def list(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle GET-request to get all the tasks."""
+
+        return self.get_drf_response(
+            request=request,
+            data=request.user.tasks.all(),
+            serializer_class=TaskListModelSerializer,
+            many=True
+        )
+
+    @validate_serializer_data(
+        serializer_class=TaskCreateModelSerializer
+    )
+    def create(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handler POST-request to create a new task instance."""
+
+        serializer: TaskCreateModelSerializer = kwargs.get("serializer")
+        new_task: Task = serializer.save()
+        return self.get_drf_response(
+            request=request,
+            data=new_task,
+            serializer_class=TaskDetailModelSerializer
+        )
+
+    @find_queryset_object_by_query_pk(
+        queryset=Task.objects,
+        class_name=Task,
+        entity_name="Task"
+    )
+    def delete(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...], 
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle DELETE-request to drop your owned task."""
+        task: Task = kwargs.get("object")
+        self.check_object_permissions(request=request, obj=task)
+        task.delete()
+        return DRFResponse(
+            data="Your task has been succesfully deleted",
+            status=HTTP_204_NO_CONTENT
+        )
+
+    @find_queryset_object_by_query_pk(
+        queryset=Task.objects,
+        class_name=Task,
+        entity_name="Task"
+    )
+    @validate_serializer_data(
+        serializer_class=TaskPartialUpdateModelSerializer
+    )
+    def partial_update(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle PATCH-request to change task's status."""
+        task: Task = kwargs.get("object")
+        serializer: TaskPartialUpdateModelSerializer = TaskPartialUpdateModelSerializer(
+            instance=task,
+            data=request.data,
+            partial=True
+        )
+        serializer.save()
+        return DRFResponse(
+            data=TaskDetailModelSerializer(
+                instance=task,
                 many=False
             ).data,
             status=HTTP_200_OK

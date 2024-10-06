@@ -46,17 +46,6 @@ class DRFResponseHandler:
             data, many=many, context=serializer_context
         )
         response: DRF_Response = DRF_Response(
-            {'response': serializer.data}, status=status_code
+            data=serializer.data, status=status_code
         )
         return response
-
-    def get_simple_drf_response(
-        self,
-        data: Any,
-        status_code: int = HTTP_200_OK,
-    ) -> DRF_Response:
-        """Method to return DRF response with applied data and status code."""
-        return DRF_Response(
-            data={"response": data},
-            status=status_code,
-        )

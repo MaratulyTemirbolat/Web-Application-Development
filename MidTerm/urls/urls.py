@@ -8,7 +8,7 @@ from rest_framework.routers import DefaultRouter
 from django.contrib import admin
 from django.urls import path, include
 
-from apps.tasks.views import UserViewSet
+from apps.tasks.views import UserViewSet, TaskViewSet
 
 
 urlpatterns = [
@@ -28,6 +28,11 @@ router.register(
     prefix="auths/users",
     viewset=UserViewSet,
     basename="user"
+)
+router.register(
+    prefix="tasks/tasks",
+    viewset=TaskViewSet,
+    basename="task"
 )
 
 urlpatterns += [
