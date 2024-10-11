@@ -24,9 +24,18 @@ class Author(Model):
     and adds additional information like bio and social media URL.
     """
     
-    user: User = OneToOneField(User, on_delete=CASCADE)  # Link to Django's User model
-    bio: Optional[str] = TextField(blank=True, null=True)  # Optional bio of the author
-    social_media_url: Optional[str] = URLField(blank=True, null=True)  # Optional social media link
+    user: User = OneToOneField(
+        to=User,
+        on_delete=CASCADE
+    )  # Link to Django's User model
+    bio: Optional[str] = TextField(
+        blank=True,
+        null=True
+    )  # Optional bio of the author
+    social_media_url: Optional[str] = URLField(
+        blank=True,
+        null=True
+    )  # Optional social media link
 
     def __str__(self) -> str:
         """
