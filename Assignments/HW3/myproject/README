@@ -1,0 +1,47 @@
+
+## Installation
+
+1. Clone the repository:
+    ```sh
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
+
+2. Install dependencies using Poetry:
+    ```sh
+    poetry install
+    ```
+
+3. Apply migrations:
+    ```sh
+    poetry run python manage.py migrate
+    ```
+
+4. Run the development server:
+    ```sh
+    poetry run python manage.py runserver
+    ```
+
+## Project Details
+
+### Views
+
+- `PostListView`: Displays a list of blog posts.
+- `PostDetailView`: Displays the details of a single blog post.
+
+### Templates
+
+- `base.html`: Base template that includes header and footer.
+- `index.html`: Template for the blog index page.
+- `_footer.html`: Footer partial template.
+- `_header.html`: Header partial template.
+
+### Settings
+
+- Configured in [`myproject/settings.py`](myproject/settings.py).
+- Static files are served from `static/`.
+- Media files are served from `media/`.
+
+## License
+
+This project is licensed under the MIT License.

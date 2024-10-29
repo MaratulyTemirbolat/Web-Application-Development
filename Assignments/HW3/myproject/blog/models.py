@@ -12,6 +12,7 @@ from django.db.models import (
     ImageField,
     CASCADE,
 )
+from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
 
@@ -124,6 +125,13 @@ class Post(Model):
         """Return the string representation of the object."""
 
         return self.title
+
+    def get_absolute_url(self) -> str:
+        """Return the absolute URL of the object."""
+        return reverse(
+            viewname="post_detail",
+            kwargs={"pk": self.id}
+        )
 
 
 class Comment(Model):

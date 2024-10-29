@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Add new post :: {{ block.super }}
+{% endblock %}
+
+{% block content %}
+    <div style="width:50%; margin-left:25%">
+        <h1> Форма регистрации пользователя </h1>
+        <form method = 'post'>
+            {% csrf_token %}
+
+            {{ form.as_p }}
+            <!-- {% for field in form %}
+                <div class="input-group mb-3">
+                    <span class="input-group-text" id="">{{ field.label }}</span>
+                    {{ field }}
+                </div>
+            {% endfor %} -->
+            <!-- <div class="input-group mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-default">Title</span>
+                <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-default">
+            </div>              
+            <div class="input-group">
+                <span class="input-group-text">Content</span>
+                <textarea class="form-control" aria-label="With textarea"></textarea>
+            </div>
+            <br>
+            <div class="input-group mb-3">
+                <input type="file" class="form-control">
+                <label class="input-group-text" for="inputGroupFile02">Upload</label>
+            </div> -->
+            <button type="submit">Создать</button>
+        </form>
+    </div>
+    <br>
+{% endblock %}

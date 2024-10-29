@@ -1,14 +1,17 @@
 <header class="header">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-2">
-                <div class="logo">
-                    <h2><a href="{% url 'posts_list' %}">Classic</a></h2>
-                </div>
-            </div>
-            <div class="col-md-10">
-                <h2>Welcome to the club buddy</h2>
-            </div>
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Posts</a>
+            <form class="d-flex" role="search">
+                <input
+                    name="s"
+                    class="form-control me-2"
+                    type="search"
+                    placeholder="Search via title"
+                    aria-label="Search"
+                >
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
         </div>
-    </div>
+    </nav>
 </header>

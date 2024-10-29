@@ -6,69 +6,34 @@
 {% endblock %}
 
 {% block content %}
-<section class="bg-text-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="bg-text">
-                    <h3>Classic Blog Design</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut
-                        labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                        laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in
-                        voluptate velit esse cillum dolore eu fugiat nulla </p>
-                </div>
-            </div>
+
+<section style="padding: 20px; display: flex; flex-wrap: wrap; gap: 50px;">
+    {% for post in posts %}
+    <div class="card" style="width: 18rem;">
+        {% if post.image %}
+        <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" width="350">
+        {% else %}
+        <img src="https://image.freepik.com/free-vector/flat-coming-soon-wallpaper_23-2148887719.jpg"
+            class="card-img-top" alt="no-figure" width="350">
+        {% endif %}
+        <div class="card-body">
+            <h5 class="card-title"><b>{{ post.title }}</b></h5>
+            {% if post.content %}
+            <p class="card-text">{{ post.content|truncatewords_html:30 }}</p>
+            {% else %}
+            <p class="card-text">Post's description is empty</p>
+            {% endif %}
+        </div>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item">{{ post.author }}</li>
+            <li class="list-group-item">{{ post.published_at|date:"d.m.Y" }}</li>
+        </ul>
+        <div class="card-body" style="display: flex; justify-content: center; align-items: center;">
+            <a href="{{ post.get_absolute_url }}" class="btn btn-primary">Detailed information</a>
         </div>
     </div>
-</section>
-
-<section class="blog-post-area">
-    <div class="container">
-        <div class="row">
-            <div class="blog-post-area-style">
-                <div class="col-md-12">
-                    <div class="single-post-big">
-                        <div class="big-image">
-                            <img src="{% static 'img/post-image1.jpg' %}" alt="">
-                        </div>
-                        <div class="big-text">
-                            <h3><a href="#">Post Title Goes Here.</a></h3>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                            <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
-                            <h4><span class="date">25 February 2017</span><span class="author">Posted By: <span
-                                        class="author-name">Kabbo Liate</span></span>
-                            </h4>
-                        </div>
-                    </div>
-                </div>
-                {% for post in posts %}
-                <div class="col-md-3">
-                    <div class="single-post">
-                        {% if post.photo %}
-                        <img src="{{ post.photo.url }}" alt="{{ post.title }}" width="350">
-                        {% else %}
-                        <img src="https://image.freepik.com/free-vector/flat-coming-soon-wallpaper_23-2148887719.jpg"
-                            alt="" width="350">
-                        {% endif %}
-                        <h3><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>
-                        <h4><span>Posted By: <span class="author-name">{{ post.author }}</span></span>
-                        </h4>
-                        {% if post.content %}
-                            {{ post.content|truncatewords_html:30|safe }}
-                        {% else %}
-                            <p>Post content is empty</p>
-                        {% endif %}
-                        <h4><span>{{ post.published_at|date:"d.m.Y" }}</span></h4>
-                    </div>
-                </div>
-                {% endfor %}
-
-            </div>
-        </div>
-    </div>
+    {% empty %}
+    <h3>No posts yet</h3>
+    {% endfor %}
 </section>
 {% endblock %}
