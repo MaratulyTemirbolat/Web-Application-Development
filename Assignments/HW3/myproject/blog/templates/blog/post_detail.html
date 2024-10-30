@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{{ post.title }} :: {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<section style="padding: 20px; display: flex; justify-content: center; align-items: flex-start; flex-wrap: wrap; gap: 50px;">
+    <div class="card" style="max-width: 800px; width: 100%; box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1); border-radius: 15px; overflow: hidden;">
+        {% if post.image %}
+        <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" style="max-height: 400px; object-fit: cover;">
+        {% else %}
+        <img src="https://image.freepik.com/free-vector/flat-coming-soon-wallpaper_23-2148887719.jpg"
+             class="card-img-top" alt="No Image Available" style="max-height: 400px; object-fit: cover;">
+        {% endif %}
+        <div class="card-body">
+            <h1 class="card-title" style="font-size: 2rem; margin-bottom: 10px;">{{ post.title }}</h1>
+            <p style="color: #777;">By <b>{{ post.author.username }}</b> on {{ post.published_at|date:"d M Y" }}</p>
+            <hr>
+            <p class="card-text" style="line-height: 1.6; margin-top: 20px;">{{ post.content }}</p>
+            <div style="margin-top: 20px;">
+                <h5>Categories:</h5>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    {% for category in post.categories.all %}
+                    <span class="badge bg-primary" style="padding: 10px; border-radius: 10px;">{{ category.name }}</span>
+                    {% empty %}
+                    <p>No categories assigned</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <h3>Comments</h3>
+            <hr>
+            {% for comment in post.comments.all %}
+            <div style="background-color: #f9fafb; padding: 10px; margin-bottom: 10px; border-radius: 8px;">
+                <p>{{ comment.content }}</p>
+            </div>
+            {% empty %}
+            <p>No comments yet. Be the first to comment!</p>
+            {% endfor %}
+        </div>
+
+        <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;">
+            <a href="{% url 'posts_list' %}" class="btn btn-secondary">Back to Posts</a>
+            <a href="{% url 'add_post' %}" class="btn btn-primary">Add a new Post</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
