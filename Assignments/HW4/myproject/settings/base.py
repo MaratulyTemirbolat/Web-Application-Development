@@ -1,7 +1,9 @@
-from pathlib import Path
+import os
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Quick-start development settings - unsuitable for production
@@ -26,6 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'debug_toolbar',
     'blog.apps.BlogConfig',
 ]
 
@@ -37,6 +40,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'settings.urls'
@@ -65,8 +69,12 @@ WSGI_APPLICATION = 'settings.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config("POSTGRES_DB", cast=str),
+        'USER': config("POSTGRES_USER", cast=str),
+        'PASSWORD': config("POSTGRES_PASSWORD", cast=str),
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -106,8 +114,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+INTERNAL_IPS = [
+    "127.0.0.1",
+]

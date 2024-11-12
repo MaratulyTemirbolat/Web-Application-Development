@@ -1,3 +1,18 @@
-from django.contrib import admin
+from django.contrib.admin import register, ModelAdmin
 
-# Register your models here.
+from blog.models import Post, Category, Comment
+
+
+@register(Post)
+class PostAdmin(ModelAdmin):
+    ...
+
+
+@register(Category)
+class CategoryAdmin(ModelAdmin):
+    ...
+
+
+@register(Comment)
+class CommentAdmin(ModelAdmin):
+    ...

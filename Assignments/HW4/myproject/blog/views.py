@@ -20,6 +20,7 @@ from rest_framework.status import (
 
 from blog.models import Post, Comment
 from blog.handlers import DRFResponseHandler
+from blog.permissions import IsUserAuthor
 from blog.decorators import (
     find_queryset_object_by_query_pk,
     validate_serializer_data,
@@ -39,6 +40,7 @@ class PostViewSet(DRFResponseHandler, ViewSet):
 
     queryset: Manager = Post.objects
     serializer_class: Type[PostBaseModelSerializer] = PostBaseModelSerializer
+    permission_classes: tuple[IsAuthenticated, IsUserAuthor] = (IsAuthenticated, IsUserAuthor,)
 
     def get_queryset(self) -> QuerySet[Post]:
         """Get all Posts queryset."""
@@ -54,13 +56,15 @@ class PostViewSet(DRFResponseHandler, ViewSet):
         """Handle GET-endpoint to obtain a list of all posts."""
         return self.get_drf_response(
             request=request,
-            data=self.get_queryset(),
+            data=self.queryset.select_related("author"),
             serializer_class=PostListModelSerializer,
             many=True
         )
 
     @find_queryset_object_by_query_pk(
-        queryset=Post.objects,
+        queryset=Post.objects.select_related(
+            "author"
+        ).prefetch_related("categories"),
         class_name=Post,
         entity_name="Post"
     )
@@ -90,11 +94,9 @@ class PostViewSet(DRFResponseHandler, ViewSet):
         """Handle POST-request endpoint to create a new Post."""
         serializer: PostCreateModelSerializer = kwargs["serializer"]
         post: Post = serializer.save()
-        return self.get_drf_response(
-            request=request,
-            data=post,
-            serializer_class=self.serializer_class,
-            status_code=HTTP_201_CREATED
+        return DRFResponse(
+            data=request.data,
+            status=HTTP_201_CREATED
         )
 
     @find_queryset_object_by_query_pk(
@@ -111,6 +113,8 @@ class PostViewSet(DRFResponseHandler, ViewSet):
         """Handle PATCH-request to update a post partially."""
 
         post: Post = kwargs["object"]
+
+        self.check_object_permissions(request=request, obj=post)
 
         serializer: PostUpdateModelSerializer = PostUpdateModelSerializer(
             instance=post,
@@ -181,14 +185,12 @@ class PostViewSet(DRFResponseHandler, ViewSet):
     )
     def add_comment(
         self,
-        pk: str,
         request: DRFRequest,
         *args: tuple[Any, ...],
         **kwargs: dict[Any, Any]
     ) -> DRFResponse:
         """Handle POST-request to create a new comment for a post."""
         post: Post = kwargs["object"]
-        self.check_object_permissions(request=request, obj=post)
         data_copy: dict[str, Any] = request.data.copy()
         data_copy["post"] = post.id
         serializer: CommentBaseModelSerializer = CommentBaseModelSerializer(
