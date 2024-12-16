@@ -118,7 +118,7 @@ class Order(AbstractBaseModel):
     )
     status: int = IntegerField(
         choices=STATUS_CHOICES,
-        verbose_name="Order status "
+        verbose_name="Order status"
     )
     products: ManyToManyField = ManyToManyField(
         to=Product,
