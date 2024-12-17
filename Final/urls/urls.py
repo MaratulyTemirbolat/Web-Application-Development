@@ -9,6 +9,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from apps.auths.views import UserViewSet
+from apps.orders.views import ProductViewSet
 
 
 urlpatterns = [
@@ -28,6 +29,11 @@ router.register(
     prefix="auths/users",
     viewset=UserViewSet,
     basename="user"
+)
+router.register(
+    prefix="orders/products",
+    viewset=ProductViewSet,
+    basename="product"
 )
 
 urlpatterns += [

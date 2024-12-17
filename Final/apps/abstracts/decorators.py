@@ -25,9 +25,9 @@ T = TypeVar("T")
 def validate_serializer_data(
     serializer_class: Type[Serializer],
     context: dict[str, Any] = {},
-    check_query_params: bool = False,
+    many: bool = False
 ) -> Callable:
-    """Decorator to preprocess the request data for SAS credentials."""
+    """Decorator to preprocess the request data validation."""
 
     def decorator(
         func: Callable[
@@ -36,32 +36,22 @@ def validate_serializer_data(
     ) -> Callable:
         @wraps(func)
         def wrapper(
-            request: DRFRequest | Any,
+            self,
+            request: DRFRequest,
             *args: tuple[Any, ...],
             **kwargs: dict[Any, Any],
         ):
-            # Get the serializer's validated data and check
-            req: Any = request
-
-            if not isinstance(request, DRFRequest):
-                for arg in args:
-                    if isinstance(arg, DRFRequest):
-                        req = arg
-                        break
-
-            if not "request" in context:
-                context["request"] = req
+            context["request"] = request
 
             serializer: Serializer = serializer_class(
-                data=req.query_params
-                if check_query_params
-                else req.data,
+                data=request.data,
                 context=context,
+                many=many,
             )
             if serializer.is_valid():
                 kwargs["validated_data"] = serializer.validated_data.copy()
                 kwargs["serializer"] = serializer
-                return func(req, *args, **kwargs)
+                return func(self, request, *args, **kwargs)
             else:
                 return DRFResponse(
                     data=serializer.errors,
@@ -93,6 +83,7 @@ def find_queryset_object_by_query_pk(
     ) -> Callable:
         @wraps(func)
         def wrapper(
+            self,
             request: DRFRequest,
             *args: tuple[Any, ...],
             **kwargs: dict[Any, Any],
@@ -102,12 +93,12 @@ def find_queryset_object_by_query_pk(
             assert pk is not None, "Primary key is not provided"
             try:
                 kwargs["object"] = queryset.get(pk=pk)
-                return func(request, *args, **kwargs)
+                return func(self, request, *args, **kwargs)
             except class_name.DoesNotExist:
                 return DRFResponse(
                     data={
                         "id": [
-                            f"The {entity_name} with id {pk} has not been found"
+                            f"{entity_name} with ID {pk} hasn't been found"
                         ]
                     },
                     status=HTTP_404_NOT_FOUND,

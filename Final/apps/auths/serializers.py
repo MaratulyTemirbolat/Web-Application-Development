@@ -9,11 +9,14 @@ from rest_framework.serializers import (
     Serializer,
     CharField,
     EmailField,
+    HiddenField,
+    CurrentUserDefault,
     ValidationError,
 )
 from rest_framework.exceptions import NotFound
 
 from django.contrib.auth.models import User
+from apps.orders.models import UserAddress, State, City
 
 
 class UserBaseModelSerializer(ModelSerializer):
@@ -137,3 +140,59 @@ class CreateUserModelSerializer(ModelSerializer):
         value["is_active"] = True
         value["username"] = value["email"].lower()
         return value
+
+
+class BaseStateModelSerializer(ModelSerializer):
+    """List State model Serializer."""
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[State] = State
+        fields: str = "__all__"
+
+
+class ForeignStateModelSerializer(BaseStateModelSerializer):
+    """Foreign state model Serializer."""
+
+    ...
+
+
+class BaseCityModelSerializert(ModelSerializer):
+    """List City model Serializer."""
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[City] = City
+        fields: str = "__all__"
+
+
+class ForeignCityModelSerializer(BaseCityModelSerializert):
+    """Foreign City model Serializer."""
+
+    state: ForeignStateModelSerializer = ForeignStateModelSerializer()
+
+
+class CreateAddressModelSerializer(ModelSerializer):
+    """Serializer for creating a new address for a user."""
+
+    user: HiddenField = HiddenField(default=CurrentUserDefault())
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[UserAddress] = UserAddress
+        fields: str = "__all__"
+
+
+class ListAddressModelSerializer(ModelSerializer):
+    """Serializer for creating a new address for a user."""
+
+    city: ForeignCityModelSerializer = ForeignCityModelSerializer()
+
+    class Meta:
+        """Customization of the Serializer."""
+
+        model: Type[UserAddress] = UserAddress
+        fields: str = "__all__"

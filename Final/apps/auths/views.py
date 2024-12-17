@@ -9,6 +9,7 @@ from rest_framework.response import Response as DRFResponse
 from rest_framework.request import Request as DRFRequest
 from rest_framework.status import (
     HTTP_200_OK,
+    HTTP_201_CREATED,
     HTTP_501_NOT_IMPLEMENTED,
 )
 from rest_framework.permissions import (
@@ -27,11 +28,14 @@ from django.contrib.auth import login
 # Project
 from apps.abstracts.handlers import DRFResponseHandler
 from apps.abstracts.decorators import validate_serializer_data
+from apps.orders.models import ShoppingCart
 from apps.auths.serializers import (
     UserBaseModelSerializer,
     LoginUserSerializer,
     DetailUserModelSerializer,
     CreateUserModelSerializer,
+    CreateAddressModelSerializer,
+    ListAddressModelSerializer,
 )
 
 
@@ -118,13 +122,68 @@ class UserViewSet(DRFResponseHandler, ViewSet):
     ) -> DRFResponse:
         """Method to handle register user request."""
         serializer: CreateUserModelSerializer = kwargs.get("serializer")
+
+        # Create user
         new_user: User = serializer.save()
         new_user.password = make_password(password=request.data["password"])
         new_user.save(update_fields=["password"])
+
+        # Add shopping cart
+        if not ShoppingCart.objects.filter(user=new_user).exists():
+            ShoppingCart.objects.create(user=new_user)
+
         return DRFResponse(
             data=DetailUserModelSerializer(
                 instance=new_user,
                 many=False
             ).data,
-            status=HTTP_200_OK
+            status=HTTP_201_CREATED
+        )
+
+    @action(
+        methods=["POST"],
+        detail=False,
+        url_path="add-address",
+        url_name="add_address",
+    )
+    @validate_serializer_data(
+        serializer_class=CreateAddressModelSerializer
+    )
+    def add_address(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle POST-request to add a new address."""
+        serializer: CreateAddressModelSerializer = kwargs["serializer"]
+
+        serializer.save()
+
+        return DRFResponse(
+            data=serializer.data,
+            status=HTTP_201_CREATED
+        )
+
+    @action(
+        methods=["GET"],
+        detail=False,
+        url_path="view-addresses",
+        url_name="view_addresses",
+    )
+    def view_addresses(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle GET request to view all the user's addresses."""
+        return self.get_drf_response(
+            request=request,
+            data=request.user.addresses.select_related(
+                "city",
+                "city__state"
+            ).all(),
+            serializer_class=ListAddressModelSerializer,
+            many=True
         )
