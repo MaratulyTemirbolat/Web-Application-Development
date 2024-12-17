@@ -1,5 +1,5 @@
 # Python
-from typing import Optional
+from typing import Optional, TypedDict
 
 # Django
 from django.core.validators import MaxValueValidator
@@ -118,6 +118,7 @@ class Order(AbstractBaseModel):
     )
     status: int = IntegerField(
         choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
         verbose_name="Order status"
     )
     products: ManyToManyField = ManyToManyField(
@@ -323,6 +324,13 @@ class UserAddress(AbstractBaseModel):
         verbose_name="User who lives here"
     )
 
+    class Meta:
+        """Customization of the Table."""
+
+        verbose_name: str = "User address"
+        verbose_name_plural: str = "User addresses"
+        ordering: tuple[str] = ("-updated_at",)
+
 
 class Review(AbstractBaseModel):
     """Review database model."""
@@ -363,6 +371,13 @@ class Review(AbstractBaseModel):
         verbose_name_plural: str = "Reviews"
 
 
+class PaymentMethodDict(TypedDict):
+    """Dictionary for typing payment method."""
+
+    payment_method: int
+    payment_method_description: str
+
+
 class Payment(AbstractBaseModel):
     """Payment database model."""
 
@@ -395,3 +410,10 @@ class Payment(AbstractBaseModel):
         ordering: tuple[str] = ("-updated_at",)
         verbose_name: str = "Payment"
         verbose_name_plural: str = "Payments"
+
+    def get_payment_dict(self) -> PaymentMethodDict:
+        """Get payment credentials."""
+        return {
+            "payment_method": self.payment_method,
+            "payment_method_description": dict(self.PAYMENT_METHODS)[self.payment_method]
+        }

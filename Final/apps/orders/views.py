@@ -9,6 +9,7 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
     HTTP_501_NOT_IMPLEMENTED,
 )
@@ -21,7 +22,7 @@ from rest_framework.decorators import action
 # Django
 from django.db.models import QuerySet, F
 from django.db.models.manager import BaseManager
-
+from django.db import transaction
 
 # Project
 from apps.abstracts.handlers import DRFResponseHandler
@@ -31,10 +32,11 @@ from apps.abstracts.decorators import (
 )
 from apps.orders.utils import convert_to_int
 from apps.orders.models import (
+    Order,
+    OrderProduct,
     Product,
     CartItem,
     ShoppingCart,
-    Review,
 )
 from apps.orders.serializers.products import (
     BaseProductModelSerializer,
@@ -48,6 +50,8 @@ from apps.orders.serializers.reviews import (
     CreateReviewModelSerializer,
     ListReviewModelSerializer,
 )
+from apps.orders.serializers.orders import BaseOrderModelSerializer
+from apps.orders.serializers.payments import CreatePaymentModelSerializer
 
 
 class ProductViewSet(DRFResponseHandler, ViewSet):
@@ -264,3 +268,101 @@ class ShoppingCartViewSet(DRFResponseHandler, ViewSet):
             product=request.data.get("product")
         ).delete()
         return DRFResponse(status=HTTP_204_NO_CONTENT)
+
+
+class OrderViewSet(DRFResponseHandler, ViewSet):
+    """Order related endpoints."""
+
+    queryset: BaseManager[Order] = Order.objects
+    permission_classes: tuple[BasePermission] = (IsAuthenticated,)
+    serializer_class: Type[BaseOrderModelSerializer] = BaseOrderModelSerializer
+
+    def create(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle POST-request to create a new order."""
+
+        cart_items: QuerySet[CartItem] = CartItem.objects.select_related(
+            "product"
+        ).filter(
+            cart=request.user.shopping_cart
+        )
+
+        if not cart_items.exists():
+            return DRFResponse(
+                data="You have no items in your cart",
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        total_price: int = 0
+
+        item: CartItem
+        for item in cart_items:
+            total_price += item.product.price * item.quantity
+
+
+        with transaction.atomic():
+            order: Order = Order.objects.create(
+                purchaser=request.user,
+                total_price=total_price
+            )
+
+            order_products: list[OrderProduct] = [
+                OrderProduct(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=int(item.quantity*item.product.price)
+                )
+                for item in cart_items
+            ]
+            OrderProduct.objects.bulk_create(order_products)
+
+            # Commit the changes only if everything is successful
+            # Clear the cart after the order is placed
+            cart_items.delete()
+
+        return DRFResponse(status=HTTP_200_OK)
+
+    @action(
+        methods=["POST"],
+        detail=True,
+        url_path="pay",
+        url_name="pay",
+    )
+    @find_queryset_object_by_query_pk(
+        queryset=Order.objects,
+        class_name=Order,
+        entity_name="Order"
+    )
+    def pay(
+        self,
+        request: DRFRequest,
+        *args: tuple[Any, ...],
+        **kwargs: dict[Any, Any]
+    ) -> DRFResponse:
+        """Handle POST-request to create an order."""
+
+        order: Order = kwargs["object"]
+        data_copy: dict[str, Any] = request.data.copy()
+        data_copy["order"] = order.id
+        data_copy["amount"] = order.total_price
+        serializer: CreatePaymentModelSerializer = CreatePaymentModelSerializer(
+            data=data_copy
+        )
+        if not serializer.is_valid():
+            return DRFResponse(
+                data=serializer.errors,
+                status=HTTP_400_BAD_REQUEST
+            )
+        serializer.save()
+        return DRFResponse(
+            data=serializer.data,
+            status=HTTP_201_CREATED
+        )
+
+
+
