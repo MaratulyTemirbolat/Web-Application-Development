@@ -1,4 +1,8 @@
 from datetime import timedelta
+from corsheaders.defaults import (
+    default_headers,
+    default_methods,
+)
 
 
 SECRET_KEY = 'django-insecure-o0p57fruaexkc3mo#w*g-zr#5ngn=uch_o@@4@a0t^tmpy2+j$'
@@ -53,4 +57,14 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainSlidingSerializer",
     "SLIDING_TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSlidingSerializer",
 }
+
+# ------------------------------------------------
+# CORS CONFIGURATION
+#
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    'Access-Control-Allow-Origin',
+)
+CORS_ALLOW_METHODS = default_methods
 
