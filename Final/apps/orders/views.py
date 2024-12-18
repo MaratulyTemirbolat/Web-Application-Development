@@ -363,6 +363,3 @@ class OrderViewSet(DRFResponseHandler, ViewSet):
             data=serializer.data,
             status=HTTP_201_CREATED
         )
-
-
-
